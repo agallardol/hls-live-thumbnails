@@ -35,7 +35,9 @@ var optionDefinitions = [
 	// The default width of the thumbnails to generate (px). If omitted this will be calculated automatically from the height, or default to 150.
 	{ name: 'width', alias: 'w', type: Number },
 	// The default height of the thumbnails to generate (px). If omitted this will be calculated automatically from the width.
-	{ name: 'height', alias: 'h', type: Number }
+	{ name: 'height', alias: 'h', type: Number },
+	// Indicate that it is an endless stream
+	{ name: 'endless', alias: 'd', type: Boolean, defaultValue: false }
 ];
 
 var options = commandLineArgs(optionDefinitions);
@@ -80,6 +82,7 @@ var initialThumbnailCount = options.initialThumbnailCount || null;
 var targetThumbnailCount = !interval ? options.targetThumbnailCount || 30 : null;
 var height = options.height || null;
 var width = options.width || (options.height ? null : 150);
+var endless = options.endless;
 
 var simpleThumbnailGeneratorOptions = {
 	expireTime: expireTime,
@@ -93,7 +96,8 @@ var thumbnailGeneratorOptions = {
 	initialThumbnailCount: initialThumbnailCount,
 	targetThumbnailCount: targetThumbnailCount,
 	width: width,
-	height: height
+	height: height,
+	endless: endless
 };
 
 Promise.resolve().then(() => {

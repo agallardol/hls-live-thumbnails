@@ -40,6 +40,7 @@ function ThumbnailGenerator(options) {
 		thumbnailWidth: !options.thumbnailHeight ? 150 : null,
 		thumbnailHeight: null,
 		outputNamePrefix: null,
+		endless: null,
 		logger: Logger.get('ThumbnailGenerator')
 	}, options || {});
 	if (!opts.playlistUrl) {
@@ -64,6 +65,7 @@ function ThumbnailGenerator(options) {
 	this._tempDir = opts.tempDir;
 	this._outputNamePrefix = opts.outputNamePrefix;
 	this._logger = opts.logger || nullLogger;
+	this._endless = opts.endless || false;
 
 	this._resolvedPlaylistUrl = null;
 	this._segmentTargetDuration = null;
@@ -156,7 +158,7 @@ ThumbnailGenerator.prototype._grabThumbnails = function() {
 			return;
 		}
 
-		if (!this._hasPlaylistChanged(parsed)) {
+		if (!this._endless && !this._hasPlaylistChanged(parsed)) {
 			this._logger.debug("Playlist hasn't changed.");
 			return;
 		}
@@ -171,6 +173,7 @@ ThumbnailGenerator.prototype._grabThumbnails = function() {
 		this._playlistEnded = !!properties.foundEndlist;
 		var lastLocationSN = this._lastLocation ? this._lastLocation.sn : null;
 		var duration = this._calculateSegmentStartTime(segments, segments.length);
+		var endless = this._endless;
 
 		if (this._targetThumbnailCount) {
 			// automatically adjust the interval so that we have the requested thumbnail count
@@ -213,7 +216,7 @@ ThumbnailGenerator.prototype._grabThumbnails = function() {
 		function handleSegment(i) {
 			return Promise.resolve().then(() => {
 				var segment = segments[i];
-				var sn = firstSN+i;
+				var sn = endless ? 0 : firstSN+i;
 				var startTime = time;
 				var endTime = time + segment.properties.duration;
 				time = endTime;
@@ -221,7 +224,8 @@ ThumbnailGenerator.prototype._grabThumbnails = function() {
 				if (endTime > nextThumbnailTime) {
 					// generate thumbnails from this file
 					// the start time could be negative if the last thumbnail for the last segment failed
-					var timeIntoSegment = Math.max(0, nextThumbnailTime-startTime);
+					
+					var timeIntoSegment = endless ? 0 : Math.max(0, nextThumbnailTime-startTime);
 					return this._generateThumbnails(segment, sn, timeIntoSegment).then((thumbnailData) => {
 						if (this._destroyed) {
 							return;
@@ -298,6 +302,7 @@ ThumbnailGenerator.prototype._hasPlaylistChanged = function(newPlaylist) {
 
 // generate thumbnails for a particular segment
 ThumbnailGenerator.prototype._generateThumbnails = function(segment, segmentSN, timeIntoSegment) {
+
 	var segmentUrl = url.resolve(this._resolvedPlaylistUrl, segment.properties.uri);
 	return this._getUrlBuffer(segmentUrl).then((buffer) => {
 		return utils.ensureExists(this._tempDir).then(() => {
@@ -414,6 +419,7 @@ ThumbnailGenerator.prototype._generateThumbnailWithFfmpeg = function(segmentFile
 			});
 		})
 		.on("error", (err) => {
+			
 			reject(err);
 		}).run();
 	});
