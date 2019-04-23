@@ -530,14 +530,17 @@ ThumbnailGenerator.prototype._BadStatusCodeException = function(statusCode) {
 util.inherits(ThumbnailGenerator.prototype._BadStatusCodeException, Error);
 
 ThumbnailGenerator.prototype._getExtension = function(name) {
+	var j = name.indexOf("?");
+	if (j === -1) {
+		j = name.length;
+	}
+	name = name.substring(0, j);
 	var i = name.lastIndexOf(".");
 	if (i === -1) {
 		return "";
 	}
-	var j = name.lastIndexOf("?");
-	if (j === -1) {
-		j = name.length;
-	}
+
+	console.log(name, i, j);
 	return name.substring(i+1, j);
 };
 
