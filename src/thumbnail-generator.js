@@ -540,7 +540,6 @@ ThumbnailGenerator.prototype._getExtension = function(name) {
 		return "";
 	}
 
-	console.log(name, i, j);
 	return name.substring(i+1, j);
 };
 
