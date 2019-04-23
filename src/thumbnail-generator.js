@@ -37,8 +37,8 @@ function ThumbnailGenerator(options) {
 		initialThumbnailCount: null,
 		interval: null,
 		targetThumbnailCount: !options.interval ? 30 : null,
-		thumbnailWidth: !options.thumbnailHeight ? 150 : null,
-		thumbnailHeight: null,
+		thumbnailWidth: !options.width ? 150 : options.width,
+		thumbnailHeight: !options.height ? null : options.height,
 		outputNamePrefix: null,
 		endless: null,
 		logger: Logger.get('ThumbnailGenerator')
