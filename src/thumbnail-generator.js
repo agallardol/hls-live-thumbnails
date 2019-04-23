@@ -536,7 +536,7 @@ ThumbnailGenerator.prototype._getExtension = function(name) {
 	}
 	var j = name.lastIndexOf("?");
 	if (j === -1) {
-		j == name.length;
+		j = name.length;
 	}
 	return name.substring(i+1, j);
 };
