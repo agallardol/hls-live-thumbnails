@@ -41,6 +41,7 @@ function ThumbnailGenerator(options) {
 		thumbnailHeight: !options.height ? null : options.height,
 		outputNamePrefix: null,
 		endless: null,
+		proxy: null,
 		logger: Logger.get('ThumbnailGenerator')
 	}, options || {});
 	if (!opts.playlistUrl) {
@@ -66,6 +67,7 @@ function ThumbnailGenerator(options) {
 	this._outputNamePrefix = opts.outputNamePrefix;
 	this._logger = opts.logger || nullLogger;
 	this._endless = opts.endless || false;
+	this._proxy = opts.proxy;
 
 	this._resolvedPlaylistUrl = null;
 	this._segmentTargetDuration = null;
@@ -508,15 +510,49 @@ ThumbnailGenerator.prototype._getUrlBuffer = function(url, dest) {
 			timeout: 15000
 		}, (err, res, body) => {
 			if (err) {
-				reject(err);
-				return;
-			}
+				
+				request({
+					url: url,
+					encoding: null,
+					timeout: 15000,
+					proxy: this._proxy
+				}, (err, res, body) => {
+					if (err) {
+						reject(err);
+						return;
+					}
 
-			if (res.statusCode < 200 || res.statusCode >= 300) {
-				reject(new this._BadStatusCodeException(res.statusCode));
+					if (res.statusCode < 200 || res.statusCode >= 300) {
+						reject(new this._BadStatusCodeException(res.statusCode));
+						return;
+					}
+					resolve(body);
+				});
 				return;
 			}
-			resolve(body);
+			else if (res.statusCode < 200 || res.statusCode >= 300) {
+				request({
+					url: url,
+					encoding: null,
+					timeout: 15000,
+					proxy: this._proxy
+				}, (err, res, body) => {
+					if (err) {
+						reject(err);
+						return;
+					}
+
+					if (res.statusCode < 200 || res.statusCode >= 300) {
+						reject(new this._BadStatusCodeException(res.statusCode));
+						return;
+					}
+					resolve(body);
+				});
+				return;
+			}
+			else{
+				resolve(body);
+			}
 		});
 	});
 };
