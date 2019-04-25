@@ -276,7 +276,11 @@ ThumbnailGenerator.prototype._grabThumbnails = function() {
 
 		// reschedule
 		var interval = null;
-		if (this._playlistEnded) {
+		if (this._endless)
+		{
+			interval = this._interval;
+		}
+		else if (this._playlistEnded) {
 			// We are now just checking if the playlist is still online.
 			// No need to refresh that often.
 			interval = 30000;
@@ -503,6 +507,19 @@ ThumbnailGenerator.prototype._parsePlaylist = function(playlistUrl) {
 };
 
 ThumbnailGenerator.prototype._getUrlBuffer = function(url, dest) {
+	console.log("next->");
+	return new Promise((resolve, reject) => {
+			var promise = this._doGetUrlBuffer(url, dest);
+			promise.then((res) => {
+				resolve(promise);
+			})
+			.catch((err)=>{
+				resolve(this._getUrlBuffer(url, dest));
+			});
+		});
+};
+
+ThumbnailGenerator.prototype._doGetUrlBuffer = function(url, dest) {
 	return new Promise((resolve, reject) => {
 		request({
 			url: url,
@@ -514,7 +531,7 @@ ThumbnailGenerator.prototype._getUrlBuffer = function(url, dest) {
 				request({
 					url: url,
 					encoding: null,
-					timeout: 15000,
+					timeout: 30000,
 					proxy: this._proxy
 				}, (err, res, body) => {
 					if (err) {
@@ -534,7 +551,7 @@ ThumbnailGenerator.prototype._getUrlBuffer = function(url, dest) {
 				request({
 					url: url,
 					encoding: null,
-					timeout: 15000,
+					timeout: 30000,
 					proxy: this._proxy
 				}, (err, res, body) => {
 					if (err) {
