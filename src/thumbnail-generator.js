@@ -507,7 +507,6 @@ ThumbnailGenerator.prototype._parsePlaylist = function(playlistUrl) {
 };
 
 ThumbnailGenerator.prototype._getUrlBuffer = function(url, dest) {
-	console.log("next->");
 	return new Promise((resolve, reject) => {
 			var promise = this._doGetUrlBuffer(url, dest);
 			promise.then((res) => {
