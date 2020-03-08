@@ -523,7 +523,8 @@ ThumbnailGenerator.prototype._doGetUrlBuffer = function(url, dest) {
 		request({
 			url: url,
 			encoding: null,
-			timeout: 15000
+			timeout: 15000,
+			followAllRedirects: true,
 		}, (err, res, body) => {
 			if (err) {
 				
@@ -531,6 +532,7 @@ ThumbnailGenerator.prototype._doGetUrlBuffer = function(url, dest) {
 					url: url,
 					encoding: null,
 					timeout: 30000,
+					followAllRedirects: true,
 					proxy: this._proxy
 				}, (err, res, body) => {
 					if (err) {
@@ -551,6 +553,7 @@ ThumbnailGenerator.prototype._doGetUrlBuffer = function(url, dest) {
 					url: url,
 					encoding: null,
 					timeout: 30000,
+					followAllRedirects: true,
 					proxy: this._proxy
 				}, (err, res, body) => {
 					if (err) {
