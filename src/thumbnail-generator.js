@@ -10,7 +10,7 @@ var Logger = require("./logger");
 var nullLogger = require("./null-logger");
 var config = require("./config");
 var utils = require("./utils");
-
+var axios = require('axios');
 var ffmpegTimeout = config.ffmpegTimeout;
 
 /**
@@ -395,14 +395,24 @@ ThumbnailGenerator.prototype._calculateSegmentStartTime = function(segments, seg
 };
 
 ThumbnailGenerator.prototype._getResolvedPlaylistUrl = function() {
-	return this._parsePlaylist(this._playlistUrl).then((parsed) => {
-		if (parsed.items.StreamItem.length > 0) {
-			// get the first media playlist that is provided
-			var newUrl = parsed.items.StreamItem[0].properties.uri;
-			newUrl = url.resolve(this._playlistUrl, newUrl);
-			return Promise.resolve(newUrl);
-		}
-		return Promise.resolve(this._playlistUrl);
+	return new Promise((resolve, reject) => {
+		axios.get(this._playlistUrl, {
+			maxRedirects: 5,
+		}).then(response => {
+			if(response.status === 200) {
+				this._parsePlaylist(response.request.res.responseUrl).then(parsed => {
+					var newUrl = parsed.items.StreamItem[0].properties.uri;
+					newUrl = url.resolve(response.request.res.responseUrl, newUrl);
+					resolve(newUrl);
+				}).catch(e => {
+					reject(e);
+				});
+			} else {
+				reject(new Error('Error getting m3u8'));
+			}
+		}).catch(e => {
+			reject(e);
+		});
 	});
 };
 
@@ -411,7 +421,7 @@ ThumbnailGenerator.prototype._generateThumbnailWithFfmpeg = function(segmentFile
 		var command = new Ffmpeg({
 			timeout: ffmpegTimeout
 		}).input(segmentFileLocation)
-		.seek(this._roundFfmpeg(timeIntoSegment))
+		// .seek(this._roundFfmpeg(timeIntoSegment))
 		.noAudio()
 		.frames(1)
 		.size(this._thumbnailSize)
@@ -520,61 +530,18 @@ ThumbnailGenerator.prototype._getUrlBuffer = function(url, dest) {
 
 ThumbnailGenerator.prototype._doGetUrlBuffer = function(url, dest) {
 	return new Promise((resolve, reject) => {
-		request({
-			url: url,
-			encoding: null,
-			timeout: 15000,
-			followAllRedirects: true,
-			followOriginalHttpMethod: true
-		}, (err, res, body) => {
-			if (err) {
-				
-				request({
-					url: url,
-					encoding: null,
-					timeout: 30000,
-					followAllRedirects: true,
-					followOriginalHttpMethod: true,
-					proxy: this._proxy
-				}, (err, res, body) => {
-					if (err) {
-						reject(err);
-						return;
-					}
-
-					if (res.statusCode < 200 || res.statusCode >= 300) {
-						reject(new this._BadStatusCodeException(res.statusCode));
-						return;
-					}
-					resolve(body);
-				});
-				return;
+		axios.get(url, {
+			maxRedirects: 5,
+			responseType: 'arraybuffer'
+		}).then(response => {
+			if(response.status === 200) {
+				resolve(Buffer.from(response.data));
+			} else {
+				resolve(this._playlistUrl);
 			}
-			else if (res.statusCode < 200 || res.statusCode >= 300) {
-				request({
-					url: url,
-					encoding: null,
-					timeout: 30000,
-					followAllRedirects: true,
-					followOriginalHttpMethod: true,
-					proxy: this._proxy
-				}, (err, res, body) => {
-					if (err) {
-						reject(err);
-						return;
-					}
-
-					if (res.statusCode < 200 || res.statusCode >= 300) {
-						reject(new this._BadStatusCodeException(res.statusCode));
-						return;
-					}
-					resolve(body);
-				});
-				return;
-			}
-			else{
-				resolve(body);
-			}
+		})
+		.catch(e => {
+			resolve(this._playlistUrl);
 		});
 	});
 };

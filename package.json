@@ -27,6 +27,7 @@
   },
   "homepage": "https://github.com/tjenkinson/hls-live-thumbnails",
   "dependencies": {
+    "axios": "^0.19.2",
     "body-parser": "^1.15.2",
     "command-line-args": "^3.0.0",
     "event-emitter": "^0.3.4",
