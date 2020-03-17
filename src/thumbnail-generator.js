@@ -421,7 +421,7 @@ ThumbnailGenerator.prototype._generateThumbnailWithFfmpeg = function(segmentFile
 		var command = new Ffmpeg({
 			timeout: ffmpegTimeout
 		}).input(segmentFileLocation)
-		// .seek(this._roundFfmpeg(timeIntoSegment))
+		.seek(this._roundFfmpeg(timeIntoSegment))
 		.noAudio()
 		.frames(1)
 		.size(this._thumbnailSize)
